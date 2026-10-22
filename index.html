@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Corporate Ladder</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; background: #0f1115; color: #e6e6e6; font-family: ui-monospace, Menlo, monospace; }
+      #app { position: relative; width: 800px; height: 600px; margin: 24px auto; }
+      #app canvas { display: block; image-rendering: pixelated; }
+      #chat-input {
+        position: absolute; left: 24px; right: 24px; bottom: 16px; display: none;
+        padding: 10px 12px; font: inherit; font-size: 15px;
+        background: #1b1f27; color: #fff; border: 2px solid #5b8def; border-radius: 6px; outline: none;
+      }
+      #chat-input.visible { display: block; }
+      #state-panel {
+        position: absolute; top: 8px; right: 8px; max-width: 240px; padding: 8px 10px;
+        background: rgba(0,0,0,.55); border: 1px solid #333; border-radius: 6px;
+        font-size: 11px; line-height: 1.45; white-space: pre-wrap; pointer-events: none;
+      }
+      #loading {
+        position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
+        gap: 12px; background: rgba(10,12,16,.92); text-align: center; padding: 24px;
+      }
+      #loading.visible { display: flex; }
+      #loading .bar { width: 420px; height: 10px; background: #222; border-radius: 5px; overflow: hidden; }
+      #loading .fill { height: 100%; width: 0%; background: #5b8def; transition: width .2s; }
+      #loading .text { font-size: 12px; color: #aaa; max-width: 520px; }
+      #help { width: 800px; margin: 0 auto; font-size: 12px; color: #888; text-align: center; }
+      #help a { color: #5b8def; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <input id="chat-input" type="text" autocomplete="off" placeholder="Say something… (Enter to send, Esc to leave)" />
+      <div id="state-panel"></div>
+      <div id="loading">
+        <div><strong>Loading language model</strong></div>
+        <div class="bar"><div class="fill"></div></div>
+        <div class="text">Starting…</div>
+      </div>
+    </div>
+    <div id="help">
+      WASD / arrows to move · E to talk · hold SPACE to speak · LLM: <span id="backend-name">?</span>
+      (<a href="?llm=mock">mock</a> / <a href="?llm=webllm">webllm</a>) ·
+      STT: <span id="stt-name">?</span> (<a href="?stt=whisper">whisper</a> / <a href="?stt=web">browser</a>)
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
