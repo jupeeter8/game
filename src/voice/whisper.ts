@@ -1,7 +1,16 @@
 import type { SttBackend, SttState, VoiceHandlers } from "./types";
 
 /** Swap to "onnx-community/whisper-tiny.en" for a smaller/faster (less accurate) model. */
-export const WHISPER_MODEL_ID = "onnx-community/whisper-base.en";
+export const WHISPER_MODELS: Record<string, string> = {
+  tiny: "onnx-community/whisper-tiny.en",
+  base: "onnx-community/whisper-base.en",
+  small: "onnx-community/whisper-small.en", // ~250 MB q8; markedly better with names
+};
+/** `?stt_model=small` picks a Whisper size. */
+export const WHISPER_MODEL_ID = (() => {
+  const want = typeof location !== "undefined" ? new URLSearchParams(location.search).get("stt_model") : null;
+  return want ? (WHISPER_MODELS[want] ?? want) : WHISPER_MODELS.base;
+})();
 const TARGET_RATE = 16000;
 const MIN_SECONDS = 0.4;
 const MIN_RMS = 0.004;

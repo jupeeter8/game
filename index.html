@@ -3,50 +3,126 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Corporate Ladder</title>
+    <title>Willowmere</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
     <style>
-      :root { color-scheme: dark; }
-      html, body { margin: 0; background: #0f1115; color: #e6e6e6; font-family: ui-monospace, Menlo, monospace; }
-      #app { position: relative; width: 800px; height: 600px; margin: 24px auto; }
-      #app canvas { display: block; image-rendering: pixelated; }
-      #chat-input {
-        position: absolute; left: 24px; right: 24px; bottom: 16px; display: none;
-        padding: 10px 12px; font: inherit; font-size: 15px;
-        background: #1b1f27; color: #fff; border: 2px solid #5b8def; border-radius: 6px; outline: none;
+      :root {
+        color-scheme: dark;
+        --bg: #0b0b10; --panel: #13131a; --line: #2a2a3a; --text: #f2f0e6; --muted: #8b90a0;
+        --accent: #ffd166; --ok: #6cc985; --warn: #ffb347; --bad: #ff6b6b; --dim: #1a1a24; --tape: #d9534f;
       }
-      #chat-input.visible { display: block; }
-      #state-panel {
-        position: absolute; top: 8px; right: 8px; max-width: 240px; padding: 8px 10px;
-        background: rgba(0,0,0,.55); border: 1px solid #333; border-radius: 6px;
-        font-size: 11px; line-height: 1.45; white-space: pre-wrap; pointer-events: none;
-      }
-      #loading {
-        position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
-        gap: 12px; background: rgba(10,12,16,.92); text-align: center; padding: 24px;
-      }
-      #loading.visible { display: flex; }
-      #loading .bar { width: 420px; height: 10px; background: #222; border-radius: 5px; overflow: hidden; }
-      #loading .fill { height: 100%; width: 0%; background: #5b8def; transition: width .2s; }
-      #loading .text { font-size: 12px; color: #aaa; max-width: 520px; }
-      #help { width: 800px; margin: 0 auto; font-size: 12px; color: #888; text-align: center; }
-      #help a { color: #5b8def; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 20px/1.25 "VT323", monospace; }
+      .px { font-family: "Press Start 2P", monospace; font-size: 10px; line-height: 1.8; }
+      header { display: flex; align-items: center; gap: 18px; padding: 8px 14px; border-bottom: 2px solid var(--line); background: var(--panel); }
+      header h1 { font: 14px "Press Start 2P", monospace; margin: 0; color: var(--accent); }
+      header .meta { color: var(--muted); font-size: 18px; }
+      header .meta strong { color: var(--text); }
+      header a { color: var(--accent); }
+      header .bar { width: 160px; height: 8px; background: #222; border: 2px solid var(--line); display: none; }
+      header .bar.visible { display: block; }
+      header .bar .fill { height: 100%; width: 0; background: var(--accent); }
+      main { display: grid; grid-template-columns: 804px minmax(420px, 1fr); gap: 10px; padding: 10px; height: calc(100vh - 46px); }
+      .col { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 0; }
+      #stage { position: relative; width: 804px; }
+      #hud { display: flex; align-items: center; gap: 14px; padding: 6px 10px; background: #000; border: 2px solid #fff; margin-bottom: 6px; }
+      #hud .sp { flex: 1; }
+      #game { width: 800px; height: 560px; border: 2px solid #fff; background: #000; image-rendering: pixelated; }
+      #game canvas { display: block; image-rendering: pixelated; }
+      button { background: #000; color: var(--text); border: 2px solid #fff; padding: 4px 10px; font: 18px "VT323", monospace; cursor: pointer; }
+      button:hover, button.sel { border-color: var(--accent); color: var(--accent); }
+      button.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+      button.tape { background: var(--tape); border-color: var(--tape); color: #fff; }
+      button:disabled { opacity: .4; cursor: default; }
+      input[type=text], select { background: #000; color: var(--text); border: 2px solid #fff; padding: 4px 8px; font: 20px "VT323", monospace; }
+      input[type=text]:focus { outline: none; border-color: var(--accent); }
+      /* dialogue box, Undertale style */
+      #dlg { position: absolute; left: 2px; right: 2px; bottom: 2px; background: #000; border: 4px solid #fff; padding: 10px 12px; display: none; z-index: 6; min-height: 150px; }
+      #dlg.visible { display: block; }
+      #dlg .top { display: flex; gap: 12px; align-items: flex-start; }
+      #dlg canvas.portrait { width: 64px; height: 64px; image-rendering: pixelated; border: 2px solid #fff; flex: none; background: #000; }
+      #dlg .body { flex: 1; min-width: 0; }
+      #dlg .who { color: var(--accent); margin-bottom: 4px; display: flex; justify-content: space-between; }
+      #dlg .lines { max-height: 96px; overflow-y: auto; font-size: 22px; }
+      #dlg .line { margin: 2px 0; }
+      #dlg .line.you { color: #9fc5ff; }
+      #dlg .line.sys { color: var(--muted); font-style: italic; }
+      #dlg .line .reel { color: var(--tape); font-size: 16px; margin-left: 8px; }
+      #dlg .inrow { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+      #dlg .inrow input { flex: 1; }
+      #dlg .hint { color: var(--muted); font-size: 16px; margin-top: 4px; }
+      #dlg .hint b { color: var(--text); border: 1px solid #fff; padding: 0 4px; font-weight: normal; }
+      .ptt.live { background: var(--accent); color: #000; }
+      #rec { position: absolute; top: 8px; right: 8px; z-index: 7; color: #fff; background: var(--tape); padding: 2px 8px; display: none; }
+      #rec.visible { display: block; }
+      /* menu */
+      #menu { position: absolute; left: 50%; bottom: 170px; transform: translateX(-50%); background: #000; border: 4px solid #fff; padding: 8px 10px; display: none; z-index: 7; min-width: 260px; }
+      #menu.visible { display: block; }
+      #menu .title { color: var(--accent); margin-bottom: 6px; }
+      #menu .opt { padding: 2px 6px; cursor: pointer; }
+      #menu .opt.sel { color: var(--accent); }
+      #menu .opt.sel::before { content: "♥ "; }
+      #menu .opt:not(.sel)::before { content: "  "; white-space: pre; }
+      /* right column */
+      section.panel { background: var(--panel); border: 2px solid var(--line); padding: 10px 12px; }
+      section.panel > h2 { margin: 0 0 8px; font: 10px "Press Start 2P", monospace; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+      .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+      .tabs button { padding: 0 6px; font-size: 16px; }
+      .tabs button.active { border-color: var(--tape); color: var(--tape); }
+      .entry { border-left: 4px solid var(--tape); padding: 2px 8px; margin: 4px 0; }
+      .entry .note { color: var(--muted); font-size: 17px; }
+      .muted { color: var(--muted); }
+      .small { font-size: 16px; }
+      /* scene overlay and minigames */
+      #overlay, #minigame { position: fixed; inset: 0; background: rgba(0,0,0,.86); display: none; align-items: center; justify-content: center; z-index: 20; }
+      #overlay.visible, #minigame.visible { display: flex; }
+      #overlay .card, #minigame .card { width: 640px; max-width: 94%; background: #000; border: 4px solid #fff; padding: 20px 24px; font-size: 22px; line-height: 1.3; }
+      #overlay .card p { margin: 0 0 12px; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      #minigame h3 { font: 12px "Press Start 2P", monospace; color: var(--accent); margin: 0 0 8px; }
+      .mg-grid { display: grid; gap: 4px; margin: 12px 0; }
+      .mg-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #111; border: 2px solid #444; font-size: 22px; cursor: pointer; user-select: none; }
+      .mg-cell:hover { border-color: var(--accent); }
+      .mg-cell.pulled { opacity: .25; cursor: default; }
+      .mg-row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+      .mg-row label { min-width: 230px; }
+      .card-face { display: inline-flex; width: 56px; height: 76px; background: #f3efe6; color: #1a1407; font: bold 28px "VT323", monospace; align-items: center; justify-content: center; margin-right: 8px; border: 2px solid #333; }
+      .card-face.red { color: #b3261e; }
     </style>
   </head>
   <body>
-    <div id="app">
-      <input id="chat-input" type="text" autocomplete="off" placeholder="Say something… (Enter to send, Esc to leave)" />
-      <div id="state-panel"></div>
-      <div id="loading">
-        <div><strong>Loading language model</strong></div>
-        <div class="bar"><div class="fill"></div></div>
-        <div class="text">Starting…</div>
+    <header>
+      <h1>WILLOWMERE</h1>
+      <span class="meta"><a href="?reset=1">restart</a><span id="backend-name" hidden></span></span>
+      <div class="bar" id="load-bar"><div class="fill"></div></div>
+      <span class="meta" id="load-text"></span>
+    </header>
+    <main>
+      <div class="col">
+        <div id="stage">
+          <div id="hud"><span id="status">…</span><span class="sp"></span><span id="hud-actions"></span></div>
+          <div id="game"></div>
+          <div id="rec">● REC</div>
+          <div id="menu"></div>
+          <div id="dlg">
+            <div class="top">
+              <canvas class="portrait" id="portrait"></canvas>
+              <div class="body">
+                <div class="who"><span id="dlg-name">…</span><span id="conv-clock"></span></div>
+                <div class="lines" id="dlg-lines"></div>
+              </div>
+            </div>
+            <div class="inrow" id="dlg-input"></div>
+            <div class="hint" id="dlg-hint"></div>
+          </div>
+        </div>
+        <div class="muted small">WASD / arrows to walk · E to interact · hold SPACE to talk · hold R to speak into the tape · Esc to leave</div>
       </div>
-    </div>
-    <div id="help">
-      WASD / arrows to move · E to talk · hold SPACE to speak · LLM: <span id="backend-name">?</span>
-      (<a href="?llm=mock">mock</a> / <a href="?llm=webllm">webllm</a>) ·
-      STT: <span id="stt-name">?</span> (<a href="?stt=whisper">whisper</a> / <a href="?stt=web">browser</a>)
-    </div>
-    <script type="module" src="/src/main.ts"></script>
+      <div class="col" id="col-right"></div>
+    </main>
+    <div id="overlay"><div class="card" id="overlay-card"></div></div>
+    <div id="minigame"><div class="card" id="minigame-card"></div></div>
+    <script type="module" src="/src/play/main.ts"></script>
   </body>
 </html>

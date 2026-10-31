@@ -1,4 +1,4 @@
-import type { BeepVoice } from "../game/npcs";
+import type { BeepVoice } from "../mystery/content";
 
 /** Animal-Crossing-style blips, one per typed character. No audio files; pure oscillators. */
 export class Beeper {

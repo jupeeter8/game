@@ -1,0 +1,6 @@
+# only the game ships; the e2e browser profile alone is several GB
+e2e/
+tests/
+docs/
+dist/
+node_modules/
